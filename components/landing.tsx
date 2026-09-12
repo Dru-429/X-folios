@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
 import {
@@ -8,7 +8,15 @@ import {
   Moon,
   Sun
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore
+} from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -25,6 +33,8 @@ type Portfolio = {
 
 const records = portfolios as Portfolio[]
 const PAGE_SIZE = 20
+const THEME_STORAGE_KEY = 'x-folios-theme'
+const THEME_EVENT = 'x-folios-theme-change'
 const previewThemes = [
   'preview-warm',
   'preview-ink',
@@ -33,17 +43,93 @@ const previewThemes = [
   'preview-moss'
 ]
 
+function getPreviewRequestUrl (portfolioUrl: string) {
+  try {
+    const params = new URLSearchParams({
+      url: portfolioUrl,
+      screenshot: 'true',
+      meta: 'false',
+      'viewport.isMobile': 'false',
+      'viewport.width': '1200',
+      'viewport.height': '750'
+    })
+
+    return `https://api.microlink.io/?${params.toString()}`
+  } catch {
+    return null
+  }
+}
+
+function getScreenshotUrl (payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const data =
+    'data' in payload && payload.data && typeof payload.data === 'object'
+      ? payload.data
+      : null
+
+  const screenshot =
+    data &&
+    'screenshot' in data &&
+    data.screenshot &&
+    typeof data.screenshot === 'object'
+      ? data.screenshot
+      : null
+
+  if (
+    screenshot &&
+    'url' in screenshot &&
+    typeof screenshot.url === 'string' &&
+    screenshot.url.length > 0
+  ) {
+    return screenshot.url
+  }
+
+  return null
+}
+
+function getStoredTheme () {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+
+  if (savedTheme) {
+    return savedTheme === 'dark'
+  }
+
+  return document.documentElement.classList.contains('dark')
+}
+
+function subscribeToThemeChange (onStoreChange: () => void) {
+  if (typeof window === 'undefined') {
+    return () => {}
+  }
+
+  window.addEventListener('storage', onStoreChange)
+  window.addEventListener(THEME_EVENT, onStoreChange)
+
+  return () => {
+    window.removeEventListener('storage', onStoreChange)
+    window.removeEventListener(THEME_EVENT, onStoreChange)
+  }
+}
+
 export default function Landing () {
   const [page, setPage] = useState(1)
-  const [isDark, setIsDark] = useState(false)
+  const isDark = useSyncExternalStore(
+    subscribeToThemeChange,
+    getStoredTheme,
+    () => false
+  )
   const pageCount = Math.ceil(records.length / PAGE_SIZE)
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem('x-folios-theme')
-    const dark = savedTheme === 'dark'
-    setIsDark(dark)
-    document.documentElement.classList.toggle('dark', dark)
-  }, [])
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
 
   const currentRecords = useMemo(
     () => records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -52,9 +138,8 @@ export default function Landing () {
 
   const toggleTheme = () => {
     const next = !isDark
-    setIsDark(next)
-    document.documentElement.classList.toggle('dark', next)
-    window.localStorage.setItem('x-folios-theme', next ? 'dark' : 'light')
+    window.localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light')
+    window.dispatchEvent(new Event(THEME_EVENT))
   }
 
   const changePage = (nextPage: number) => {
@@ -222,8 +307,10 @@ function PortfolioTile ({
   portfolio: Portfolio
   index: number
 }) {
+  const [hasPreviewError, setHasPreviewError] = useState(false)
   const [rawName, handle] = portfolio.Username.split(' - ')
   const name = rawName ?? portfolio.Username
+  const portfolioUrl = portfolio['portfolio url']
   const domain = portfolio['portfolio url']
     .replace(/^https?:\/\/(www\.)?/, '')
     .replace(/\/$/, '')
@@ -237,7 +324,7 @@ function PortfolioTile ({
       transition={{ delay: Math.min(index * 0.025, 0.3), duration: 0.35 }}
     >
       <a
-        href={portfolio['portfolio url']}
+        href={portfolioUrl}
         target='_blank'
         rel='noreferrer'
         className='block'
@@ -248,20 +335,15 @@ function PortfolioTile ({
             previewThemes[index % previewThemes.length]
           }`}
         >
-          <div className='absolute inset-x-[9%] top-[13%] bottom-[12%] overflow-hidden rounded-[4px] border border-foreground/15 bg-card/80 p-[7%] transition-transform duration-500 group-hover:scale-[1.025]'>
-            <div className='mb-[10%] flex items-center justify-between'>
-              <span className='h-1 w-[26%] rounded-full bg-foreground/60' />
-              <span className='h-1 w-[14%] rounded-full bg-primary/70' />
-            </div>
-            <div className='h-[8%] w-[68%] rounded-full bg-foreground/70' />
-            <div className='mt-[5%] h-[5%] w-[48%] rounded-full bg-foreground/20' />
-            <div className='mt-[16%] grid grid-cols-3 gap-[5%]'>
-              <span className='aspect-[1.4] rounded-[2px] bg-primary/35' />
-              <span className='aspect-[1.4] rounded-[2px] bg-foreground/10' />
-              <span className='aspect-[1.4] rounded-[2px] bg-foreground/10' />
-            </div>
-            <span className='absolute bottom-[10%] left-[7%] h-1 w-[24%] rounded-full bg-foreground/25' />
-          </div>
+          {!hasPreviewError ? (
+            <PortfolioPreview
+              portfolioUrl={portfolioUrl}
+              name={name}
+              setHasPreviewError={setHasPreviewError}
+            />
+          ) : (
+            <PreviewFallback />
+          )}
           <span className='absolute right-[9%] top-[8%] font-mono text-[8px] text-foreground/60'>
             {String(portfolio['sl.no.']).padStart(3, '0')}
           </span>
@@ -298,5 +380,93 @@ function PortfolioTile ({
         {domain}
       </div>
     </motion.article>
+  )
+}
+
+function PortfolioPreview ({
+  portfolioUrl,
+  name,
+  setHasPreviewError
+}: {
+  portfolioUrl: string
+  name: string
+  setHasPreviewError: Dispatch<SetStateAction<boolean>>
+}) {
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const previewUrl = getPreviewRequestUrl(portfolioUrl)
+
+    if (!previewUrl) {
+      setHasPreviewError(true)
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function loadPreview () {
+      try {
+        const response = await fetch(previewUrl, { signal: controller.signal })
+
+        if (!response.ok) {
+          throw new Error(`Preview request failed: ${response.status}`)
+        }
+
+        const payload = await response.json()
+        const nextScreenshotUrl = getScreenshotUrl(payload)
+
+        if (!nextScreenshotUrl) {
+          throw new Error('Preview response did not include a screenshot URL')
+        }
+
+        setScreenshotUrl(nextScreenshotUrl)
+      } catch {
+        if (controller.signal.aborted) {
+          return
+        }
+
+        setHasPreviewError(true)
+      }
+    }
+
+    loadPreview()
+
+    return () => {
+      controller.abort()
+    }
+  }, [portfolioUrl, setHasPreviewError])
+
+  if (!screenshotUrl) {
+    return <PreviewFallback />
+  }
+
+  return (
+    <Image
+      src={screenshotUrl}
+      alt={`Preview of ${name}'s website`}
+      fill
+      sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+      className='object-cover transition-transform duration-500 group-hover:scale-[1.025]'
+      onError={() => setHasPreviewError(true)}
+    />
+  )
+}
+
+function PreviewFallback () {
+  return (
+    <div className='absolute inset-x-[9%] top-[13%] bottom-[12%] overflow-hidden rounded-[4px] border border-foreground/15 bg-card/80 p-[7%] transition-transform duration-500 group-hover:scale-[1.025]'>
+      <div className='mb-[10%] flex items-center justify-between'>
+        <span className='h-1 w-[26%] rounded-full bg-foreground/60' />
+        <span className='h-1 w-[14%] rounded-full bg-primary/70' />
+      </div>
+      <div className='h-[8%] w-[68%] rounded-full bg-foreground/70' />
+      <div className='mt-[5%] h-[5%] w-[48%] rounded-full bg-foreground/20' />
+      <div className='mt-[16%] grid grid-cols-3 gap-[5%]'>
+        <span className='aspect-[1.4] rounded-[2px] bg-primary/35' />
+        <span className='aspect-[1.4] rounded-[2px] bg-foreground/10' />
+        <span className='aspect-[1.4] rounded-[2px] bg-foreground/10' />
+      </div>
+      <span className='absolute bottom-[10%] left-[7%] h-1 w-[24%] rounded-full bg-foreground/25' />
+    </div>
   )
 }
