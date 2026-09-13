@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import portfolios from '@/data/portfolios.json'
 import Link from 'next/link'
 import { Navbar } from './ui/Navbar';
+import Hero from './ui/Hero';
 
 type Portfolio = {
   'sl.no.': number
@@ -137,12 +138,6 @@ export default function Landing () {
     [page]
   )
 
-  const toggleTheme = () => {
-    const next = !isDark
-    window.localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light')
-    window.dispatchEvent(new Event(THEME_EVENT))
-  }
-
   const changePage = (nextPage: number) => {
     setPage(Math.min(pageCount, Math.max(1, nextPage)))
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -158,30 +153,11 @@ export default function Landing () {
         id='folios'
         className='mx-auto max-w-[1440px] px-5 pb-12 pt-12 sm:px-8 sm:pt-16 lg:px-10 lg:pt-20'
       >
-        <section className='mb-12 flex flex-col justify-between gap-8 border-b border-border pb-10 sm:flex-row sm:items-end'>
-          <div className='max-w-2xl'>
-            <p className='mb-5 font-mono text-[11px] uppercase tracking-[0.18em] text-primary'>
-              A living index / 2026
-            </p>
-            <h1 className='font-display text-5xl font-normal leading-[0.96] tracking-[-0.06em] sm:text-7xl'>
-              Portfolios from <span className='text-primary'>X.</span>
-            </h1>
-            <p className='mt-6 max-w-lg text-base leading-relaxed text-muted-foreground'>
-              A small collection of personal corners on the internet, made by
-              developers and designers who share their work on X.
-            </p>
-          </div>
-          <div className='flex items-end gap-3 text-right'>
-            <div>
-              <p className='font-display text-4xl tracking-[-0.05em]'>
-                {records.length}
-              </p>
-              <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground'>
-                folios collected
-              </p>
-            </div>
-          </div>
-        </section>
+        <div>
+          <Hero 
+            num = {records.length}
+          />
+        </div>
 
         <div className='mb-5 flex items-center justify-between gap-4'>
           <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground'>
