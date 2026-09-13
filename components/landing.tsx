@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import portfolios from '@/data/portfolios.json'
 import Link from 'next/link'
+import { Navbar } from './ui/Navbar';
 
 type Portfolio = {
   'sl.no.': number
@@ -150,44 +151,7 @@ export default function Landing () {
   return (
     <div className='min-h-screen bg-background text-foreground'>
       <header className='border-b border-border'>
-        <div className='mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-10'>
-          <Link
-            href='/'
-            className='font-display text-xl font-medium tracking-tight text-foreground'
-          >
-            <span className='text-primary'>x</span> folios
-          </Link>
-          <nav
-            className='hidden items-center gap-7 text-sm text-muted-foreground sm:flex'
-            aria-label='Primary navigation'
-          >
-            <Link
-              href='#folios'
-              className='transition-colors hover:text-foreground'
-            >
-              folios
-            </Link>
-            <Link
-              href='https://x.com'
-              target='_blank'
-              rel='noreferrer'
-              className='transition-colors hover:text-foreground'
-            >
-              X ↗
-            </Link>
-          </nav>
-          <Button
-            variant='outline'
-            size='icon'
-            onClick={toggleTheme}
-            aria-label={
-              isDark ? 'Switch to light mode' : 'Switch to night mode'
-            }
-            className='border-border bg-card text-foreground shadow-none hover:bg-accent hover:text-accent-foreground'
-          >
-            {isDark ? <Sun aria-hidden='true' /> : <Moon aria-hidden='true' />}
-          </Button>
-        </div>
+        <Navbar />
       </header>
 
       <main
