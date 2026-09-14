@@ -22,8 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import portfolios from '@/data/portfolios.json'
 import Link from 'next/link'
-import { Navbar } from './ui/Navbar';
-import Hero from './ui/Hero';
+import { Navbar } from './ui/Navbar'
+import Hero from './ui/Hero'
 
 type Portfolio = {
   'sl.no.': number
@@ -153,11 +153,7 @@ export default function Landing () {
         id='folios'
         className='mx-auto max-w-[1440px] px-5 pb-12 pt-12 sm:px-8 sm:pt-16 lg:px-10 lg:pt-20'
       >
-        <div>
-          <Hero 
-            num = {records.length}
-          />
-        </div>
+        <Hero num={records.length} />
 
         <div className='mb-5 flex items-center justify-between gap-4'>
           <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground'>
