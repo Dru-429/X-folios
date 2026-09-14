@@ -1,34 +1,87 @@
-import { Moon, Sun, User } from "lucide-react";
+"use client";
+
+import { Moon, Sun, User, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 import Link from "next/link";
-import { Avatar } from "./avatar";
 
-function NavPill({ to, label }: { to: string; label: string }) {
+function NavPill({
+  to,
+  label,
+  primary = false,
+}: {
+  to: string;
+  label: string;
+  primary?: boolean;
+}) {
   return (
     <Link
       href={to}
-      className="inline-flex items-center justify-center rounded-sm border border-border bg-card px-4 py-1 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:text-primary"
+      className={cn(
+        "inline-flex h-9 items-center justify-center rounded-md border px-4 text-sm font-medium",
+        "transition-all duration-200",
+        primary
+          ? "border-primary bg-primary text-primary-foreground hover:opacity-90"
+          : "border-border bg-card text-foreground hover:border-foreground/40"
+      )}
     >
       {label}
     </Link>
   );
 }
 
-function ThemeToggle({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) {
+function ThemeToggle({
+  isDark,
+  toggleTheme,
+}: {
+  isDark: boolean;
+  toggleTheme: () => void;
+}) {
   return (
     <button
+      type="button"
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="relative inline-flex h-8 w-18 shrink-0 items-center rounded-sm border border-border bg-card transition-colors hover:border-primary/60"
+      className={cn(
+        "relative flex h-9 w-[72px] items-center rounded-md",
+        "border border-border bg-card p-1",
+        "transition-colors duration-200",
+        "hover:border-foreground/40"
+      )}
     >
+      {/* Sliding orange indicator */}
       <span
         className={cn(
-          "absolute left-1 flex h-8 w-10 items-center justify-center rounded-sm bg-primary text-primary-foreground transition-transform duration-300",
-          isDark ? "translate-x-7" : "-translate-x-1"
+          "absolute top-1 flex h-7 w-8 items-center justify-center rounded-[4px]",
+          "bg-primary text-primary-foreground",
+          "transition-transform duration-300 ease-out",
+          isDark ? "translate-x-7" : "translate-x-0"
         )}
       >
-        {isDark ? <Moon size={12} aria-hidden="true" /> : <Sun size={12} aria-hidden="true" />}
+        {isDark ? (
+          <Moon size={14} strokeWidth={2} aria-hidden="true" />
+        ) : (
+          <Sun size={14} strokeWidth={2} aria-hidden="true" />
+        )}
+      </span>
+
+      {/* Empty side icons */}
+      <span
+        className={cn(
+          "relative z-10 flex w-1/2 items-center justify-center",
+          !isDark ? "opacity-0" : "text-muted-foreground"
+        )}
+      >
+        <Sun size={13} aria-hidden="true" />
+      </span>
+
+      <span
+        className={cn(
+          "relative z-10 flex w-1/2 items-center justify-center",
+          isDark ? "opacity-0" : "text-muted-foreground"
+        )}
+      >
+        <Moon size={13} aria-hidden="true" />
       </span>
     </button>
   );
@@ -38,48 +91,72 @@ function ProfileLink() {
   return (
     <Link
       href="/profile"
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-card text-foreground transition-colors hover:border-primary/60 hover:text-primary"
       aria-label="Profile"
+      className={cn(
+        "inline-flex h-9 w-9 shrink-0 items-center justify-center",
+        "rounded-md border border-border bg-card",
+        "text-foreground transition-all duration-200",
+        "hover:border-foreground/40"
+      )}
     >
-      <User size={16} aria-hidden="true" />
+      <User size={16} strokeWidth={1.8} aria-hidden="true" />
     </Link>
   );
 }
 
 export function Navbar() {
-  const { isDark, toggleTheme, mounted } = useTheme();   
+  const { isDark, toggleTheme, mounted } = useTheme();
 
   return (
-    <header className="border-b border-border">
-      <div className="relative mx-auto flex h-16 w-full items-center justify-between px-5 sm:px-8 lg:px-10">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm px-5">
+      <div className="mx-auto flex h-[72px] w-full items-center justify-between px-6 sm:px-8 lg:px-10">
+        
+        {/* Logo */}
         <Link
           href="/"
-          className="w-[70%] shrink-0 font-display text-xl font-medium tracking-tight text-foreground"
+          className="group flex items-center font-display text-[21px] font-medium tracking-[-0.03em]"
         >
-          <span className="text-primary pl-26">X</span> folios
+          <span className="text-primary transition-opacity group-hover:opacity-80">
+            X
+          </span>
+          <span className="ml-1 text-foreground">
+            folios
+          </span>
         </Link>
 
+        {/* Navigation */}
         <nav
-          className="mx-auto flex w-[25%] min-w-0 items-center justify-betweeen gap-8"
+          className="flex items-center gap-2 sm:gap-3"
           aria-label="Primary navigation"
         >
-          <div className="flex items-center gap-2 sm:gap-3">
-            <NavPill to="/play" label="play" />
-            <NavPill to="/add" label="Add" />
-          </div>
-
-          <div className="relative md:-right-1 flex items-center gap-3 sm:gap-4">
-            {mounted ? (
-              <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-            ) : (
-              <span className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border border-border bg-card">
-                <span className="absolute top-0.5 left-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Sun size={12} aria-hidden="true" />
-                </span>
+          <NavPill
+            to="/play"
+            label={
+              <span className="flex items-center gap-2">
+                <Play size={13} fill="currentColor" />
+                Play
               </span>
-            )}
-            <ProfileLink />
-          </div>
+            }
+          />
+
+          <NavPill
+            to="/add"
+            label="Add"
+            primary
+          />
+
+          {/* Theme */}
+          {mounted ? (
+            <ThemeToggle
+              isDark={isDark}
+              toggleTheme={toggleTheme}
+            />
+          ) : (
+            <div className="h-9 w-[72px] rounded-md border border-border bg-card" />
+          )}
+
+          {/* Profile */}
+          <ProfileLink />
         </nav>
       </div>
     </header>

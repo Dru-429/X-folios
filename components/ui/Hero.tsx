@@ -44,11 +44,11 @@ export default function Hero ({ num }: HeroProps) {
         <div className='mt-8 flex flex-wrap items-center gap-3'>
           <Button
             asChild
-            className='rounded-xl md:w-[6vw] bg-primary px-6 text-primary-foreground hover:bg-primary/90'
+            className='rounded-md md:w-[6vw] bg-primary px-6 text-primary-foreground hover:bg-primary/90'
           >
             <Link href='/play'>Play</Link>
           </Button>
-          <Button asChild variant='outline' className='rounded-xl px-6 w-[6vw]'>
+          <Button asChild variant='outline' className='rounded-md px-6 w-[6vw]'>
             <Link href='/add'>Submit</Link>
           </Button>
         </div>
